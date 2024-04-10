@@ -27,41 +27,43 @@ jobs:
           else
             echo "STATUS=release" >> $GITHUB_ENV
           fi
-      - name: Publish Release
-        if: ${{ runner.os == 'Linux' && env.STATUS == 'release' && github.event_name == 'push' && github.ref == 'refs/heads/main'}}
-        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+      - name: Compress Bukkit
+        working-directory: ${{ github.workspace }}/Bukkit/build/docs/javadoc
+        run: |
+          zip -r Bukkit-${{ github.run_id }}.zip ./*
+      - name: Compress core
+        working-directory: ${{ github.workspace }}/Core/build/docs/javadoc
+        run: |
+          zip -r core-${{ github.run_id }}.zip ./*
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
-          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
-          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
-      - name: Publish Snapshot
-        if: ${{ runner.os == 'Linux' && env.STATUS != 'release' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: ./gradlew publishToSonatype
-        env:
-          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
-          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
-      - name: Publish core javadoc
-        if: ${{ runner.os == 'Linux' && env.STATUS == 'release' && github.event_name == 'push' && github.ref == 'refs/heads/main'}}
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          source-directory: 'Core/build/docs/javadoc'
-          destination-github-username: 'IntellectualSites'
-          destination-repository-name: 'plotsquared-javadocs'
-          user-email: ${{ secrets.USER_EMAIL }}
-          target-branch: main
-          target-directory: v7/core
-      - name: Publish bukkit javadoc
-        if: ${{ runner.os == 'Linux' && env.STATUS == 'release' && github.event_name == 'push' && github.ref == 'refs/heads/main'}}
-        uses: cpina/github-action-push-to-another-repository@main
+          tag_name: Build-${{ github.run_id }}
+          release_name: Build-${{ github.run_id }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset Bukkit
+        id: upload_release_asset Bukkit
+        uses: actions/upload-release-asset@v1
         env:
-          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          source-directory: 'Bukkit/build/docs/javadoc'
-          destination-github-username: 'IntellectualSites'
-          destination-repository-name: 'plotsquared-javadocs'
-          user-email: ${{ secrets.USER_EMAIL }}
-          target-branch: main
-          target-directory: v7/bukkit
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/Bukkit/build/docs/javadoc/Bukkit-${{ github.run_id }}.zip
+          asset_name: Bukkit-${{ github.run_id }}.zip
+          asset_content_type: application/zip
+      - name: Upload Release Asset core
+        id: upload_release_asset core
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/Core/build/docs/javadoc/core-${{ github.run_id }}.zip
+          asset_name: core-${{ github.run_id }}.zip
+          asset_content_type: application/zip
