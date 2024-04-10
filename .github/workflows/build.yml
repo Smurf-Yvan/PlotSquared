@@ -48,7 +48,7 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset Bukkit
-        id: upload_release_asset Bukkit
+        id: upload_release_asset_Bukkit
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,7 +58,7 @@ jobs:
           asset_name: Bukkit-${{ github.run_id }}.zip
           asset_content_type: application/zip
       - name: Upload Release Asset core
-        id: upload_release_asset core
+        id: upload_release_asset_core
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
