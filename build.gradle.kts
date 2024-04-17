@@ -22,7 +22,7 @@ plugins {
 }
 
 group = "com.intellectualsites.plotsquared"
-version = "7.3.8-SNAPSHOT"
+version = "7.3.9-SNAPSHOT"
 
 if (!File("$rootDir/.git").exists()) {
     logger.lifecycle("""
@@ -118,7 +118,7 @@ subprojects {
     }
 
     signing {
-        if (!version.toString().endsWith("-SNAPSHOT")) {
+        if (!project.hasProperty("skip.signing") && !version.toString().endsWith("-SNAPSHOT")) {
             val signingKey: String? by project
             val signingPassword: String? by project
             useInMemoryPgpKeys(signingKey, signingPassword)
